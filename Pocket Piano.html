@@ -1,0 +1,34 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Pocket Piano</title>
+<style>
+:root{--bg:#1f1b2e;--ink:#f3eefc;--acc:#ff7aa8;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:light){:root:not([data-theme=dark]){--bg:#efe9fb;--ink:#241b3d}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px system-ui,sans-serif;text-align:center;padding:6vh 12px}
+h1{font-size:clamp(32px,7vw,56px);margin:0}p{opacity:.75;margin:6px 0 24px}
+.ctl{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:24px}
+.ctl button{background:none;color:var(--ink);border:2px solid var(--ink);border-radius:20px;padding:6px 16px;cursor:pointer;font:inherit}
+.ctl .on{background:var(--acc);border-color:var(--acc);color:#1f1b2e}
+button:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.kb{position:relative;display:flex;justify-content:center;height:220px;max-width:700px;margin:auto;overflow-x:auto}
+.w{width:14.28%;min-width:48px;height:100%;background:#fff;color:#444;border:1px solid #999;border-radius:0 0 8px 8px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;cursor:pointer;touch-action:manipulation}
+.b{position:absolute;top:0;width:9%;min-width:30px;height:60%;background:#111;color:#bbb;border-radius:0 0 6px 6px;z-index:2;font-size:12px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;cursor:pointer}
+.w.a{background:var(--acc)}.b.a{background:#c43d6d}
+#lg{margin-top:20px;min-height:28px;font-size:22px;letter-spacing:2px}
+</style></head><body><h1>Pocket Piano</h1><p>Tap the keys, or play with A S D F G H J and W E T Y U on your keyboard.</p>
+<div class="ctl" id="ctl"></div><div class="kb" id="kb"></div><div id="lg" aria-live="polite"></div>
+<script>
+const W=[["C",261.63,"a"],["D",293.66,"s"],["E",329.63,"d"],["F",349.23,"f"],["G",392,"g"],["A",440,"h"],["B",493.88,"j"]];
+const B=[["C#",277.18,"w",9.5],["D#",311.13,"e",23.8],["F#",369.99,"t",52.4],["G#",415.3,"y",66.7],["A#",466.16,"u",81]];
+let wave="sine",ctx;const kb=document.getElementById('kb'),lg=document.getElementById('lg'),keys={};
+kb.innerHTML=W.map(n=>`<div class="w" data-k="${n[2]}" role="button" tabindex="0" aria-label="${n[0]}">${n[0]}</div>`).join('')+B.map(n=>`<div class="b" data-k="${n[2]}" style="left:calc(${n[3]}% + (100% - 100%)*0);" role="button" tabindex="0" aria-label="${n[0]}">${n[0]}</div>`).join('');
+const all=[...W,...B];
+function play(k){const n=all.find(x=>x[2]==k);if(!n)return;ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();
+const o=ctx.createOscillator(),g=ctx.createGain();o.type=wave;o.frequency.value=n[1];g.gain.setValueAtTime(.4,ctx.currentTime);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+1.2);
+o.connect(g).connect(ctx.destination);o.start();o.stop(ctx.currentTime+1.2);
+const el=kb.querySelector(`[data-k="${k}"]`);el.classList.add('a');setTimeout(()=>el.classList.remove('a'),150);
+lg.textContent=(lg.textContent+" "+n[0]).trim().split(" ").slice(-12).join(" ")}
+kb.querySelectorAll('[data-k]').forEach(e=>{e.onpointerdown=()=>play(e.dataset.k);e.onkeydown=ev=>{if(ev.key==' '||ev.key=='Enter'){ev.preventDefault();play(e.dataset.k)}}});
+document.onkeydown=e=>{if(!e.repeat&&!e.metaKey&&!e.ctrlKey&&e.target.tagName!='BUTTON')play(e.key.toLowerCase())};
+const ctl=document.getElementById('ctl');
+ctl.innerHTML=["sine","triangle","square","sawtooth"].map(w=>`<button class="${w==wave?'on':''}" data-w="${w}">${w}</button>`).join('');
+ctl.querySelectorAll('button').forEach(b=>b.onclick=()=>{wave=b.dataset.w;ctl.querySelectorAll('button').forEach(x=>x.className=x==b?'on':'')});
+</script></body></html>
